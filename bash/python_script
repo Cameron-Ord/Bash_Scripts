@@ -7,7 +7,7 @@ cd $folder_name;
 mkdir python;
 touch python/dbcreds.py;
 echo 'enter DB name';
-read $db_input;
+read db_input;
 echo "conn_params = {
 
     'user':'root',
