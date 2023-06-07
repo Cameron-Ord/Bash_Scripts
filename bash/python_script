@@ -1,0 +1,94 @@
+cd;
+cd Documents/Innotech;
+echo 'enter a folder name';
+read folder_name;
+mkdir $folder_name;
+cd $folder_name;
+mkdir python;
+touch python/dbcreds.py;
+echo 'enter DB name';
+read $db_input;
+echo "conn_params = {
+
+    'user':'root',
+    'password': 'password',
+    'host': 'localhost',
+    'port': 3306,
+    'database': '$db_input'
+
+}" >> python/dbcreds.py;
+touch python/app.py;
+echo 'Enter proceedure name';
+read proceedure;
+echo 'Enter api endpoint';
+read api_endpoint;
+echo "#importing
+import json
+from flask import Flask
+import dbhelper
+
+app = Flask(__name__)
+
+@app.get('$api_endpoint')
+def select_dogs():
+   #function that returns the results from run_proceedure when using respective arguments as JSON
+   results = dbhelper.run_proceedure('CALL $proceedure', [])
+   if(type(results)==list):
+    results_json = json.dumps(results, default=str)
+   else:
+      print('error')
+   return results_json
+
+#running @app
+app.run(debug=True)" >> python/app.py;
+touch .gitignore;
+echo "venv/
+dbcreds.py" >> .gitignore;
+touch python/dbhelper.py;
+echo "import mariadb
+import dbcreds
+#function that gets called on each request using args based on which request was called
+def run_proceedure(sql, args):
+    try:
+        #connecting to the DB/making results = None so if it does become defined by following code, it will end the connection.
+        results = None
+        conn = mariadb.connect(**dbcreds.conn_params)
+        cursor = conn.cursor()
+        cursor.execute(sql, args)
+        results = cursor.fetchall()
+        #catching errors and diagnosing them
+    except mariadb.ProgrammingError as error:
+        print('There is an issue with the DB code: ', error)
+    except mariadb.OperationalError as error:
+        print('DB connection issue: ',error)
+    except Exception as error:
+        print('Unknown error: ', error)
+    finally:
+        if(cursor !=None):
+            cursor.close()
+        if(conn !=None):
+            conn.close()
+            #returing the results from cursor.fetchall()
+        return results" >> python/dbhelper.py;
+
+touch readme.md;
+echo 'enter readme text';
+read readme_text;
+echo "$readme_text" >> readme.md;
+
+echo 'creating python virtual environment';
+python3 -m venv venv;
+source venv/bin/activate
+echo 'installing flask and mariadb';
+pip install flask;
+pip install mariadb;
+
+echo 'enter personal auth token';
+read auth_token
+curl \-X POST -H "Accept: application/vnd.github+json" -H "Authorization: token $auth_token" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/user/repos -d "{\"name\": \"$1\" }"
+git init;
+git add -A;
+git commit -m "first commit";
+git branch -M main;
+git remote add origin "https://github.com/NuckenMcFuggets/$1.git";
+git push -u origin main;
