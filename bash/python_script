@@ -22,6 +22,8 @@ echo 'Enter proceedure name';
 read proceedure;
 echo 'Enter api endpoint';
 read api_endpoint;
+echo 'Enter function name';
+read function;
 echo "#importing
 import json
 from flask import Flask
@@ -29,15 +31,22 @@ import dbhelper
 
 app = Flask(__name__)
 
-@app.get('$api_endpoint')
-def select_dogs():
-   #function that returns the results from run_proceedure when using respective arguments as JSON
-   results = dbhelper.run_proceedure('CALL $proceedure', [])
-   if(type(results)==list):
-    results_json = json.dumps(results, default=str)
-   else:
-      print('error')
-   return results_json
+@app.post('$api_endpoint')
+def $function():
+try:
+      #calls the function in api_helper to loop through the information sent
+      error=api_helper.check_endpoint_info(request.json, ['']) 
+      if(error !=None):
+         return 'something went wrong'
+      #calls the proceedure to insert sent information into the DB
+      results = dbhelper.run_proceedure('CALL $proceedure(?)', [request.json.get('')])
+      #returns results from db run_proceedure
+      return json.dumps(results, default=str)
+   #error catching
+   except TypeError:
+      print('Invalid entry, try again')
+   except ValueError:
+      print('Value outside range, try again')
 
 #running @app
 app.run(debug=True)" >> python/app.py;
@@ -71,6 +80,16 @@ def run_proceedure(sql, args):
             #returing the results from cursor.fetchall()
         return results" >> python/dbhelper.py;
 
+touch python/api_helper.py;
+echo "def check_endpoint_info(sent_data, expected_data):
+    try:    
+        for data in expected_data:
+            if(sent_data.get(data) == None):
+                return f'the {data} must be sent!'
+    except TypeError:
+        print('Invalid entry. (how could this happen?)')
+    except:
+        print('Something went wrong with endpoint info check.')" >> python/api_helper.py;
 touch readme.md;
 echo 'enter readme text';
 read readme_text;
